@@ -19,21 +19,23 @@ echo "checkpoint id: $CHECKPOINT_EPOCH_NAME"
 mkdir -p $OUTPUT_DIR
 
 DATA_PREFIX=/home/ec2-user/bert-data-nv
+CONFIG_FILE=zhen_bert_zero2.json
 
 deepspeed ${base_dir}/deepspeed_train.py \
---cf ${base_dir}/bert_large_lamb_nvidia_data.json \
+--cf ${base_dir}/${CONFIG_FILE} \
 --max_seq_length 512 \
 --output_dir $OUTPUT_DIR \
---print_steps 1 \
+--print_steps 10 \
 --deepspeed \
 --deepspeed_transformer_kernel \
 --job_name $JOB_NAME \
---deepspeed_config ${base_dir}/deepspeed_bsz32k_lamb_config_seq512.json \
+--deepspeed_config ${base_dir}/${CONFIG_FILE} \
 --data_path_prefix ${DATA_PREFIX} \
 --use_nvidia_dataset \
 --rewarmup \
 --lr_schedule "EE" \
 --attention_dropout_checkpoint \
+--gelu_checkpoint \
 --lr_offset 0.0 \
 # --load_training_checkpoint ${CHECKPOINT_BASE_PATH} \
 # --load_checkpoint_id ${CHECKPOINT_EPOCH_NAME} \

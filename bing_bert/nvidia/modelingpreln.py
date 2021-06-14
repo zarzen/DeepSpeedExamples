@@ -632,7 +632,7 @@ class BertEncoder(nn.Module):
                 return x_
 
             return custom_forward
-
+        # print(f'checkpoint_activation {checkpoint_activations}')
         if checkpoint_activations:
             l = 0
             num_layers = len(self.layer)
@@ -643,6 +643,7 @@ class BertEncoder(nn.Module):
                     attention_mask * 1)
                 l += chunk_length
             # decoder layers
+            
         else:
             for i, layer_module in enumerate(self.layer):
                 hidden_states = layer_module(hidden_states, attention_mask)
@@ -1126,7 +1127,8 @@ class BertForPreTrainingPreLN(BertPreTrainedModel):
         attention_mask = batch[2]
         masked_lm_labels = batch[5]
         next_sentence_label = batch[4]
-        checkpoint_activations = False
+        # checkpoint_activations = False
+        checkpoint_activations = True
 
         sequence_output, pooled_output = self.bert(
             input_ids,
