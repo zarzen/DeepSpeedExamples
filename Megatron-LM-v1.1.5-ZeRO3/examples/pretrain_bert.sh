@@ -2,10 +2,11 @@
 
 RANK=0
 WORLD_SIZE=1
-DATA_PATH=<Specify path and file prefix>_text_sentence
-CHECKPOINT_PATH=<Specify path>
+DATA_PATH=/home/ec2-user/data/bert/bert-pretrain-small_text_sentence
+CHECKPOINT_PATH=/home/ec2-user/data/bert/checkpoints
+VOCAB=/home/ec2-user/data/bert/bert-large-uncased-vocab.txt
 
-python pretrain_bert.py \
+python3 pretrain_bert.py \
        --num-layers 24 \
        --hidden-size 1024 \
        --num-attention-heads 16 \
@@ -16,7 +17,7 @@ python pretrain_bert.py \
        --save $CHECKPOINT_PATH \
        --load $CHECKPOINT_PATH \
        --data-path $DATA_PATH \
-       --vocab-file bert-vocab.txt \
+       --vocab-file $VOCAB \
        --data-impl mmap \
        --split 949,50,1 \
        --distributed-backend nccl \

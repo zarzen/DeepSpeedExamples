@@ -442,6 +442,9 @@ def train(forward_step_func, model, optimizer, lr_scheduler,
     # Turn on training mode which enables dropout.
     model.train()
 
+    if not hasattr(model, 'global_steps'):
+        setattr(model, 'global_steps', 0)
+
     # Tracking loss.
     total_loss_dict = {}
 

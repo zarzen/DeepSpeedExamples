@@ -26,11 +26,10 @@ else
 fi
 
 
-BASE_DATA_PATH=/home/ec2-user/data
-DATA_PATH=${BASE_DATA_PATH}/gpt2/my-gpt2_text_document
-VOCAB_PATH=${BASE_DATA_PATH}/gpt2/gpt2-vocab.json
-MERGE_PATH=${BASE_DATA_PATH}/gpt2/gpt2-merges.txt
-CHECKPOINT_PATH=${BASE_DATA_PATH}/gpt2/checkpoints/gpt2_345m_ds
+BASE_DATA_PATH=/home/ec2-user/data/bert
+DATA_PATH=${BASE_DATA_PATH}/bert-pretrain-small_text_sentence
+VOCAB_PATH=${BASE_DATA_PATH}/bert-large-uncased-vocab.txt
+CHECKPOINT_PATH=${BASE_DATA_PATH}/checkpoints/
 
 script_path=$(realpath $0)
 script_dir=$(dirname $script_path)
@@ -67,38 +66,34 @@ TILE_DIM=1
 LOGDIR="tboard-zero3/stage${stage}-lazyscatter-${NUM_LAYERS}l_${HIDDEN_SIZE}h_${NUM_WORKERS}n_${NUM_GPUS_PER_WORKER}g_${MP_SIZE}mp_${BATCHSIZE}b"
 
 
-gpt_options=" \
+bert_opts=" \
         --model-parallel-size ${MP_SIZE} \
-        --num-layers $NUM_LAYERS \
-        --hidden-size $HIDDEN_SIZE \
-        --num-attention-heads ${NUM_ATTN_HEADS} \
-        --seq-length 1024 \
-        --max-position-embeddings 1024 \
-        --batch-size $BATCHSIZE \
-        --train-iters 320000 \
-        --lr-decay-iters 320000 \
-        --save $CHECKPOINT_PATH \
-        --load $CHECKPOINT_PATH \
-        --data-path $DATA_PATH \
-        --vocab-file $VOCAB_PATH \
-        --merge-file $MERGE_PATH \
-        --data-impl mmap \
-        --split 949,50,1 \
-        --distributed-backend nccl \
-        --lr 1.5e-4 \
-        --lr-decay-style cosine \
-        --min-lr 1.0e-5 \
-        --weight-decay 1e-2 \
-        --clip-grad 1.0 \
-        --warmup 0.01 \
-        --checkpoint-activations \
-        --log-interval 1 \
-        --save-interval 10000 \
-        --eval-interval 2000 \
-        --eval-iters 10 \
-        --fp16 \
-        --scattered-embeddings \
-        --split-transformers \
+       --num-layers ${NUM_LAYERS} \
+       --hidden-size ${HIDDEN_SIZE} \
+       --num-attention-heads ${NUM_ATTN_HEADS} \
+       --batch-size ${BATCHSIZE} \
+       --seq-length 512 \
+       --max-position-embeddings 512 \
+       --train-iters 1000000 \
+       --save ${CHECKPOINT_PATH} \
+       --load ${CHECKPOINT_PATH} \
+       --data-path ${DATA_PATH} \
+       --vocab-file ${VOCAB_PATH} \
+       --data-impl mmap \
+       --split 949,50,1 \
+       --distributed-backend nccl \
+       --lr 0.0001 \
+       --lr-decay-style linear \
+       --min-lr 1.0e-5 \
+       --lr-decay-iters 990000 \
+       --weight-decay 1e-2 \
+       --clip-grad 1.0 \
+       --warmup .01 \
+       --log-interval 100 \
+       --save-interval 10000 \
+       --eval-interval 1000 \
+       --eval-iters 10 \
+       --fp16
 "
         #--tensorboard-dir ${LOGDIR}
 
@@ -155,9 +150,9 @@ tile_opt="${tile_opt} \
 fi
 
 
-full_options="${gpt_options} ${deepspeed_options} ${chkp_opt} ${tile_opt}"
+full_options="${bert_opts} ${deepspeed_options} ${chkp_opt} ${tile_opt}"
 
-run_cmd="deepspeed --num_nodes ${NUM_WORKERS} --num_gpus ${NUM_GPUS_PER_WORKER}  pretrain_gpt2.py ${@:2} ${full_options}"
+run_cmd="deepspeed --num_nodes ${NUM_WORKERS} --num_gpus ${NUM_GPUS_PER_WORKER}  pretrain_bert.py ${@:2} ${full_options}"
 echo ${run_cmd}
 eval ${run_cmd}
 
