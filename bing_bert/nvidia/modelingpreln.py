@@ -1126,7 +1126,7 @@ class BertForPreTrainingPreLN(BertPreTrainedModel):
         attention_mask = batch[2]
         masked_lm_labels = batch[5]
         next_sentence_label = batch[4]
-        checkpoint_activations = False
+        checkpoint_activations = True
 
         sequence_output, pooled_output = self.bert(
             input_ids,
