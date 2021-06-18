@@ -6,6 +6,7 @@ import numpy as np
 import random
 import json
 import torch
+from torch.cuda import nvtx
 import torch.distributed as dist
 from torch.utils.data import DataLoader, Dataset
 from torch.utils.data.sampler import RandomSampler, SequentialSampler
@@ -159,6 +160,7 @@ def train(args,
 
     for _, batch_index in enumerate(tqdm(dataset_iterator, smoothing=1)):
         try:
+            nvtx.range_push(f"forward-{global_step}")
             step_start = time.time()
             batch = pretrain_dataset_provider.get_batch(batch_index)
             batch = tuple(t.to(args.device) for t in batch)  # Move to GPU
@@ -168,14 +170,18 @@ def train(args,
             unscaled_loss = loss.item()
             current_data_sample_count += (args.train_micro_batch_size_per_gpu *
                                           dist.get_world_size())
+            nvtx.range_pop()
 
             # Prefetch training data
             pretrain_dataset_provider.prefetch_batch()
 
+            nvtx.range_push(f"backward-{global_step}")
             model.network.backward(loss)
 
             loss = None
-
+            nvtx.range_pop()
+            
+            nvtx.range_push(f'optimizer-{global_step}')
             if model.network.is_gradient_accumulation_boundary():
                 if args.fp16:
                     # modify learning rate with special warm up BERT uses
@@ -194,6 +200,7 @@ def train(args,
             else:
                 # Call DeepSpeed engine step on micro steps
                 model.network.step()
+            nvtx.range_pop()
 
         except StopIteration:
             continue
