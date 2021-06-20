@@ -6,9 +6,10 @@ else
     LOAD_EPOCH=$1
 fi
 base_dir=`pwd`
+_pid=$BASHPID
 
 # Where should we save checkpoints and tensorboard events?
-JOB_NAME=zhen_ds_bert_zero3
+JOB_NAME=zhen_ds_bert_zero3_1node_5B_bs8_profile
 OUTPUT_DIR=${base_dir}/bert_model_nvidia_data_outputs
 
 # Assumes job name in previous seq128 run, will resume training from epoch 18 by default
@@ -20,6 +21,9 @@ mkdir -p $OUTPUT_DIR
 
 DATA_PREFIX=/home/ec2-user/bert-data-nv
 CONFIG_FILE=zhen_config_bert_zero3.json
+
+nsys -v
+export NSYS_PROFILE='0'
 
 deepspeed ${base_dir}/deepspeed_train.py \
 --cf ${base_dir}/${CONFIG_FILE} \
@@ -37,6 +41,7 @@ deepspeed ${base_dir}/deepspeed_train.py \
 --lr_offset 0.0 \
 --gelu_checkpoint \
 --deepspeed_transformer_kernel \
-&> ${JOB_NAME}.log
+--max_steps 5 \
+&> ${JOB_NAME}-${_pid}.log
 # --load_training_checkpoint ${CHECKPOINT_BASE_PATH} \
 # --load_checkpoint_id ${CHECKPOINT_EPOCH_NAME} \

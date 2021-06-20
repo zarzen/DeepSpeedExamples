@@ -1,13 +1,13 @@
 {
-    "train_batch_size": 512,
-    "train_micro_batch_size_per_gpu": 8,
+    "train_batch_size": 1024,
+    "train_micro_batch_size_per_gpu": 2,
     "steps_per_print": 100,
     "prescale_gradients": false,
     "bert_token_file": "bert-large-uncased",
     "bert_model_config": {
         "vocab_size_or_config_json_file": 32003,
         "hidden_size": 2560,
-        "num_hidden_layers": 127,
+        "num_hidden_layers": 64,
         "num_attention_heads": 40,
         "intermediate_size": 10240,
         "hidden_act": "gelu",
@@ -17,7 +17,7 @@
         "initializer_range": 0.02
     },
     "zero_optimization": {
-      "stage": 3,
+      "stage": 2,
       "overlap_comm": true
     },
     "zero_allow_untested_optimizer": true,

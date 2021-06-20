@@ -8,7 +8,7 @@ fi
 base_dir=`pwd`
 
 # Where should we save checkpoints and tensorboard events?
-JOB_NAME=zhen_ds_bert_zero2
+JOB_NAME=zhen_ds_bert_zero2_2node
 OUTPUT_DIR=${base_dir}/bert_model_nvidia_data_outputs
 
 # Assumes job name in previous seq128 run, will resume training from epoch 18 by default
