@@ -160,7 +160,7 @@ def train(args,
 
     for _, batch_index in enumerate(tqdm(dataset_iterator, smoothing=1)):
         try:
-            nvtx.range_push(f"forward-{global_step}")
+            nvtx.range_push(f"forward-micro-batch-{_}")
             step_start = time.time()
             batch = pretrain_dataset_provider.get_batch(batch_index)
             batch = tuple(t.to(args.device) for t in batch)  # Move to GPU
@@ -175,13 +175,13 @@ def train(args,
             # Prefetch training data
             pretrain_dataset_provider.prefetch_batch()
 
-            nvtx.range_push(f"backward-{global_step}")
+            nvtx.range_push(f"backward-micro-batch-{_}")
             model.network.backward(loss)
 
             loss = None
             nvtx.range_pop()
             
-            nvtx.range_push(f'optimizer-{global_step}')
+            nvtx.range_push(f'optimizer-micro-batch-{_}')
             if model.network.is_gradient_accumulation_boundary():
                 if args.fp16:
                     # modify learning rate with special warm up BERT uses
