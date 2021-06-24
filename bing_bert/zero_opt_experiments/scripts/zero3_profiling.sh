@@ -12,13 +12,13 @@ CONFIG=${CONFIG_DIR}/zero3_1node_profile.json
 
 # make sure the nsys profile is disabled
 export NSYS_PROFILE='0'
-export NCCL_DEBUG=INFO
-export FI_PROVIDER="efa"
-export NCCL_SOCKET_IFNAME=eth
-export FI_EFA_USE_DEVICE_RDMA=1
-export RDMAV_FORK_SAFE=1
-export LD_LIBRARY_PATH=/opt/nccl/build/lib:/usr/local/cuda/lib64:/opt/amazon/efa/lib64:/opt/amazon/openmpi/lib64:/opt/aws-ofi-nccl/lib:$LD_LIBRARY_PATH
-export NCCL_MIN_NRINGS=8
+# export NCCL_DEBUG=INFO
+# export FI_PROVIDER="efa"
+# export NCCL_SOCKET_IFNAME=eth
+# export FI_EFA_USE_DEVICE_RDMA=1
+# export RDMAV_FORK_SAFE=1
+# export LD_LIBRARY_PATH=/opt/nccl/build/lib:/usr/local/cuda/lib64:/opt/amazon/efa/lib64:/opt/amazon/openmpi/lib64:/opt/aws-ofi-nccl/lib:$LD_LIBRARY_PATH
+# export NCCL_MIN_NRINGS=8
 
 # locate the training script
 TRAIN_SCRIPT_PATH=${base_dir}/../../deepspeed_train.py

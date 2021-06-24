@@ -11,7 +11,7 @@ CONFIG_DIR=${base_dir}/../configs
 CONFIG=${CONFIG_DIR}/zero2_1node_profile.json
 
 # make sure the nsys profile is disabled
-export NSYS_PROFILE='1'
+export NSYS_PROFILE='0'
 
 # locate the training script
 TRAIN_SCRIPT_PATH=${base_dir}/../../deepspeed_train.py
