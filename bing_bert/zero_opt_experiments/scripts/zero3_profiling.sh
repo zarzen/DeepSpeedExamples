@@ -29,7 +29,7 @@ BASE_OUTPUT=${base_dir}/../outputs/${JOB_NAME}
 
 mkdir -p $BASE_OUTPUT
 
-DATA_PREFIX=/home/ec2-user/bert-data-nv
+DATA_PREFIX=/home/ec2-user/data_small
 
 MAX_STEPS=5
 

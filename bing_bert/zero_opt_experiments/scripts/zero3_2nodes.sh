@@ -12,6 +12,7 @@ HOST_FILE=${base_dir}/test_hostfile
 
 CONFIG=${CONFIG_DIR}/zero3_2nodes_profile.json
 
+LOCAL_SHARD=1
 # make sure the nsys profile is disabled
 export NSYS_PROFILE='0'
 export DS_DEBUG=0
@@ -57,7 +58,7 @@ OUTPUT_DIR=$BASE_OUTPUT/
 mkdir -p $OUTPUT_DIR
 # running cmd
 ds_cmd="\
-deepspeed --hostfile=${HOST_FILE} ${TRAIN_SCRIPT_PATH} \
+DS_LOCAL_SHARD=${LOCAL_SHARD} deepspeed --hostfile=${HOST_FILE} ${TRAIN_SCRIPT_PATH} \
 ${common_args} \
 --output_dir $OUTPUT_DIR \
 --cf $CONFIG \
