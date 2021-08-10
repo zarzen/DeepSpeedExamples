@@ -11,7 +11,9 @@ CONFIG_DIR=${base_dir}/../configs
 CONFIG=${CONFIG_DIR}/zero3_1node_profile.json
 
 # make sure the nsys profile is disabled
+export DS_LOCAL_SHARD=0
 export NSYS_PROFILE='0'
+export DS_DEBUG=0
 # export NCCL_DEBUG=INFO
 # export FI_PROVIDER="efa"
 # export NCCL_SOCKET_IFNAME=eth
