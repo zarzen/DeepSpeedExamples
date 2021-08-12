@@ -80,7 +80,7 @@ print('seed:', 2222 + rank)
 torch.random.manual_seed(2222 + rank)
 
 config_dict = {
-    "train_batch_size": 16,
+    "train_batch_size": 32,
     "train_micro_batch_size_per_gpu": 4,
     "steps_per_print": 1,
     "zero_allow_untested_optimizer": True,
@@ -101,6 +101,7 @@ config_dict = {
     "zero_optimization": {
         "stage": 1,
         "overlap_comm": True,
+        "reduce_scatter": True,
         "contiguous_gradients": True,
         "reduce_bucket_size": 20
     }
@@ -134,6 +135,7 @@ for n, batch in enumerate(data_loader):
     model.backward(loss)
     model.step()
     if torch.distributed.get_rank() == 0 and model.is_gradient_accumulation_boundary():
+        torch.cuda.synchronize()
         print("{}, LOSS: {}".format(n, loss.item()))
     #print_params('step={}'.format(n), model)
     if n == 20: break
