@@ -60,9 +60,13 @@ def get_args(tmpdir, config_dict):
     parser = argparse.ArgumentParser()
     parser.add_argument("--local_rank", type=int, default=0)
     parser.add_argument('--zero', type=int, default=0)
+    parser.add_argument('--contiguous-gradients', default=False, type=bool)
+    parser.add_argument('--reduce-scatter', default=True, type=bool)
     args = parser.parse_args()  #args=''
 
     config_dict["zero_optimization"]["stage"] = args.zero
+    config_dict["zero_optimization"]['contiguous_gradients'] = args.contiguous_gradients
+    config_dict["zero_optimization"]["reduce_scatter"] = args.reduce_scatter
     print('config_dict["zero_optimization"]', config_dict["zero_optimization"])
     config_path = create_config_from_dict(tmpdir, config_dict)
 
@@ -102,7 +106,7 @@ config_dict = {
         "stage": 1,
         "overlap_comm": True,
         "reduce_scatter": True,
-        "contiguous_gradients": True,
+        "contiguous_gradients": False,
         "reduce_bucket_size": 20
     }
 }
@@ -135,7 +139,6 @@ for n, batch in enumerate(data_loader):
     model.backward(loss)
     model.step()
     if torch.distributed.get_rank() == 0 and model.is_gradient_accumulation_boundary():
-        torch.cuda.synchronize()
         print("{}, LOSS: {}".format(n, loss.item()))
     #print_params('step={}'.format(n), model)
     if n == 20: break
