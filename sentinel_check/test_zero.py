@@ -62,6 +62,7 @@ def get_args(tmpdir, config_dict):
     parser.add_argument('--zero', type=int, default=0)
     parser.add_argument('--contiguous-gradients', default=False, type=bool)
     parser.add_argument('--reduce-scatter', default=True, type=bool)
+    parser.add_argument('--hidden-size', default=4, type=int)
     args = parser.parse_args()  #args=''
 
     config_dict["zero_optimization"]["stage"] = args.zero
@@ -112,7 +113,7 @@ config_dict = {
 }
 #        "initial_scale_power": 15
 args = get_args('/tmp/', config_dict)
-hidden_dim = 4
+hidden_dim = args.hidden_size
 
 model = SimpleModel(hidden_dim, empty_grad=False, zero=args.zero)
 
