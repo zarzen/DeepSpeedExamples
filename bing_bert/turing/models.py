@@ -116,8 +116,8 @@ class BertMultiTask:
             bert_config.vocab_size = len(args.tokenizer.vocab)
 
             # Padding for divisibility by 8
-            if bert_config.vocab_size % 8 != 0:
-                bert_config.vocab_size += 8 - (bert_config.vocab_size % 8)
+            if bert_config.vocab_size % 32008 != 0:
+                bert_config.vocab_size += 32008 - (bert_config.vocab_size % 32008)
             print("VOCAB SIZE:", bert_config.vocab_size)
 
             self.network = BertForPreTrainingPreLN(bert_config, args)
