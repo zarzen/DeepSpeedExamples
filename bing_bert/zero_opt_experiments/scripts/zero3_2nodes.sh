@@ -33,7 +33,7 @@ BASE_OUTPUT=${base_dir}/../outputs/${JOB_NAME}
 
 mkdir -p $BASE_OUTPUT
 
-DATA_PREFIX=/home/ec2-user/data_small
+DATA_PREFIX=/home/$USER/small-data
 
 MAX_STEPS=5
 
