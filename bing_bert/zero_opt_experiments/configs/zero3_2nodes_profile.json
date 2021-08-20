@@ -1,13 +1,13 @@
 {
-    "train_batch_size": 128,
-    "train_micro_batch_size_per_gpu": 2,
+    "train_batch_size": 1024,
+    "train_micro_batch_size_per_gpu": 16,
     "steps_per_print": 100,
     "prescale_gradients": false,
-    "bert_token_file": "bert-large-uncased",
+    "bert_token_file": "~/DeepSpeedExamples/vocab/bert-base-uncased-vocab.txt",
     "bert_model_config": {
         "vocab_size_or_config_json_file": 32003,
         "hidden_size": 2560,
-        "num_hidden_layers": 4,
+        "num_hidden_layers": 127,
         "num_attention_heads": 40,
         "intermediate_size": 10240,
         "hidden_act": "gelu",

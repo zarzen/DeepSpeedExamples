@@ -348,7 +348,7 @@ def construct_arguments():
     args.n_gpu = 1
 
     # Loading Tokenizer
-    tokenizer = BertTokenizer.from_pretrained(config["bert_token_file"])
+    tokenizer = BertTokenizer.from_pretrained(config["bert_token_file"], cache_dir="~/DeepSpeedExamples/vocab")
     args.tokenizer = tokenizer
 
     # Set validation dataset path

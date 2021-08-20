@@ -144,6 +144,11 @@ class BertTokenizer(object):
         if os.path.isdir(vocab_file):
             vocab_file = os.path.join(vocab_file, VOCAB_NAME)
         # redirect to the cache, if necessary
+        print('convert vocab file', vocab_file)
+        cache_dir = os.path.expanduser(cache_dir)
+        vocab_file = os.path.join(cache_dir, vocab_file.rsplit('/', 1)[-1])
+        print('converted to vocab file', vocab_file)
+
         try:
             resolved_vocab_file = cached_path(vocab_file, cache_dir=cache_dir)
         except FileNotFoundError:
