@@ -2,6 +2,7 @@ import os
 import sys
 import time
 import logging
+from deepspeed.runtime.zero.partition_parameters import print_rank_0
 import numpy as np
 import random
 import json
@@ -24,6 +25,7 @@ from utils import get_argument_parser, is_time_to_exit
 
 from bing_bert_dataset_provider import BingBertDatasetProvider
 from nvidia_bert_dataset_provider import NvidiaBertDatasetProvider
+from nvidia.modelingpreln import BertForPreTrainingPreLN, BertConfig
 
 import deepspeed
 
@@ -466,16 +468,25 @@ def prepare_model_optimizer(args):
     args.local_rank = int(os.environ['LOCAL_RANK'])
 
     # Loading Model
-    model = BertMultiTask(args)
-
+    # model = BertMultiTask(args)
+    bert_config = BertConfig(**args.config["bert_model_config"])
+    bert_config.vocab_size = len(args.tokenizer.vocab)
+    # Padding for divisibility by 32008
+    if bert_config.vocab_size % 32008 != 0:
+        bert_config.vocab_size += 32008 - (bert_config.vocab_size % 32008)
+    with deepspeed.zero.Init():
+        model = BertForPreTrainingPreLN(bert_config, args)
+    print_rank_0(f'after model init', debug=True)
     # Optimizer parameters
     optimizer_grouped_parameters = prepare_optimizer_parameters(args, model)
+    print_rank_0(f'prepare_optimizer_parameters', debug=True)
 
     # DeepSpeed initializer handles FP16, distributed, optimizer automatically.
     model.network, optimizer, _, _ = deepspeed.initialize(
         args=args,
         model=model.network,
         model_parameters=optimizer_grouped_parameters)
+    print_rank_0(f'after deepspeed.initialize', debug=True)
 
     # Overwrite application configs with DeepSpeed config
     args.train_micro_batch_size_per_gpu = model.network.train_micro_batch_size_per_gpu(
