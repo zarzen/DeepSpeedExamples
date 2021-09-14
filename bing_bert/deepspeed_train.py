@@ -466,8 +466,7 @@ def prepare_model_optimizer(args):
     args.local_rank = int(os.environ['LOCAL_RANK'])
 
     # Loading Model
-    with deepspeed.zero.Init():
-        model = BertMultiTask(args)
+    model = BertMultiTask(args)
 
     # Optimizer parameters
     optimizer_grouped_parameters = prepare_optimizer_parameters(args, model)

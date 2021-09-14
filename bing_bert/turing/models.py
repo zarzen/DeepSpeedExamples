@@ -7,6 +7,7 @@ from turing.utils import TorchTuple
 from pytorch_pretrained_bert.modeling import BertModel
 from pytorch_pretrained_bert.modeling import BertPreTrainingHeads, PreTrainedBertModel, BertPreTrainingHeads
 from pytorch_pretrained_bert.file_utils import PYTORCH_PRETRAINED_BERT_CACHE
+import deepspeed
 
 class BertPretrainingLoss(PreTrainedBertModel):
     def __init__(self, bert_encoder, config):
@@ -119,8 +120,9 @@ class BertMultiTask:
             if bert_config.vocab_size % 32008 != 0:
                 bert_config.vocab_size += 32008 - (bert_config.vocab_size % 32008)
             print("VOCAB SIZE:", bert_config.vocab_size)
-
-            self.network = BertForPreTrainingPreLN(bert_config, args)
+            print("model init deepspeed config", args.deepspeed_config)
+            with deepspeed.zero.Init(config=args.deepspeed_config):
+                self.network = BertForPreTrainingPreLN(bert_config, args)
         # Use pretrained bert weights
         else:
             self.bert_encoder = BertModel.from_pretrained(
