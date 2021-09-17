@@ -120,8 +120,8 @@ class BertMultiTask:
             if bert_config.vocab_size % 32008 != 0:
                 bert_config.vocab_size += 32008 - (bert_config.vocab_size % 32008)
             print("VOCAB SIZE:", bert_config.vocab_size)
-            print("model init deepspeed config", args.deepspeed_config)
-            # with deepspeed.zero.Init(remote_device='cpu'):
+            # print("model init deepspeed config", args.deepspeed_config)
+
             self.network = BertForPreTrainingPreLN(bert_config, args)
         # Use pretrained bert weights
         else:

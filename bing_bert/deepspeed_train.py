@@ -466,20 +466,12 @@ def prepare_model_optimizer(args):
     # Initialize torch distributed
     deepspeed.init_distributed(dist_backend='nccl')
     args.local_rank = int(os.environ['LOCAL_RANK'])
+    torch.cuda.set_device(args.local_rank)
 
     # Loading Model
-    # model = BertMultiTask(args)
-    bert_config = BertConfig(**args.config["bert_model_config"])
-    bert_config.vocab_size = len(args.tokenizer.vocab)
-    # Padding for divisibility by 32008
-    if bert_config.vocab_size % 32008 != 0:
-        bert_config.vocab_size += 32008 - (bert_config.vocab_size % 32008)
-    with deepspeed.zero.Init():
-        model = BertForPreTrainingPreLN(bert_config, args)
-    print_rank_0(f'after model init', debug=True)
+    model = BertMultiTask(args)
     # Optimizer parameters
     optimizer_grouped_parameters = prepare_optimizer_parameters(args, model)
-    print_rank_0(f'prepare_optimizer_parameters', debug=True)
 
     # DeepSpeed initializer handles FP16, distributed, optimizer automatically.
     model.network, optimizer, _, _ = deepspeed.initialize(
