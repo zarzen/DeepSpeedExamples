@@ -561,9 +561,9 @@ class BertEncoder(nn.Module):
     def __init__(self, config, args, sparse_attention_config=None):
         super(BertEncoder, self).__init__()
 
-        with deepspeed.zero.Init(config=args.deepspeed_config):
+        # with deepspeed.zero.Init(config=args.deepspeed_config):
         #Added later to make it similar to GPT-2
-            self.FinalLayerNorm = BertLayerNorm(config.hidden_size, eps=1e-12)
+        self.FinalLayerNorm = BertLayerNorm(config.hidden_size, eps=1e-12)
 
         if args.deepspeed_transformer_kernel and args.deepspeed_sparse_attention:
             raise NotImplementedError(
@@ -593,22 +593,22 @@ class BertEncoder(nn.Module):
                 gelu_checkpoint=args.gelu_checkpoint,
                 stochastic_mode=args.stochastic_mode)
 
-            with deepspeed.zero.Init(config=args.deepspeed_config):
-                encoder_layers = []
-                for _ in range(config.num_hidden_layers):
-                    encoder_layers.append(DeepSpeedTransformerLayer(cuda_config))
-                self.layer = nn.ModuleList(encoder_layers)
+            # with deepspeed.zero.Init(config=args.deepspeed_config):
+            encoder_layers = []
+            for _ in range(config.num_hidden_layers):
+                encoder_layers.append(DeepSpeedTransformerLayer(cuda_config))
+            self.layer = nn.ModuleList(encoder_layers)
         else:
-            with deepspeed.zero.Init(config=args.deepspeed_config):
-                encoder_layers = []
-                for _ in range(config.num_hidden_layers):
-                    layer = BertLayer(config)
-                    if sparse_attention_config is not None:
-                        from deepspeed.ops.sparse_attention import BertSparseSelfAttention
-                        layer.attention.self = BertSparseSelfAttention(
-                            config, sparsity_config=sparse_attention_config)
+            # with deepspeed.zero.Init(config=args.deepspeed_config):
+            encoder_layers = []
+            for _ in range(config.num_hidden_layers):
+                layer = BertLayer(config)
+                if sparse_attention_config is not None:
+                    from deepspeed.ops.sparse_attention import BertSparseSelfAttention
+                    layer.attention.self = BertSparseSelfAttention(
+                        config, sparsity_config=sparse_attention_config)
 
-                    encoder_layers.append(layer)
+                encoder_layers.append(layer)
 
                 self.layer = nn.ModuleList(encoder_layers)
 
@@ -997,8 +997,8 @@ class BertModel(BertPreTrainedModel):
     """
     def __init__(self, config, args=None):
         super(BertModel, self).__init__(config)
-        with deepspeed.zero.Init(config=args.deepspeed_config):
-            self.embeddings = BertEmbeddings(config)
+        # with deepspeed.zero.Init(config=args.deepspeed_config):
+        self.embeddings = BertEmbeddings(config)
         # set pad_token_id that is used for sparse attention padding
         self.pad_token_id = config.pad_token_id if hasattr(
             config, 'pad_token_id') and config.pad_token_id is not None else 0
@@ -1010,8 +1010,8 @@ class BertModel(BertPreTrainedModel):
         # inside the BertEncoder has deepspeed.zero.Init 
         self.encoder = BertEncoder(
             config, args, sparse_attention_config=self.sparse_attention_config)
-        with deepspeed.zero.Init(config=args.deepspeed_config):
-            self.pooler = BertPooler(config)
+        # with deepspeed.zero.Init(config=args.deepspeed_config):
+        self.pooler = BertPooler(config)
         self.apply(self.init_bert_weights)
         logger.info("Init BERT pretrain model")
 
@@ -1130,9 +1130,9 @@ class BertForPreTrainingPreLN(BertPreTrainedModel):
         self.bert = BertModel(config, args)
         print(f'type of word embeddings {self.bert.embeddings.word_embeddings}, weight {self.bert.embeddings.word_embeddings.weight}')
 
-        with deepspeed.zero.Init(config=args.deepspeed_config):
-            self.cls = BertPreTrainingHeads(
-                config, self.bert.embeddings.word_embeddings)
+        # with deepspeed.zero.Init(config=args.deepspeed_config):
+        self.cls = BertPreTrainingHeads(
+            config, self.bert.embeddings.word_embeddings)
         self.apply(self.init_bert_weights)
         self.args = args
 
