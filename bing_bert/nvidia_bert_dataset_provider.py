@@ -8,6 +8,7 @@ from concurrent.futures import ProcessPoolExecutor
 import numpy as np
 
 import torch
+from torch._C import device
 import torch.distributed as dist
 from torch.utils.data import DataLoader, Dataset
 from torch.utils.data.sampler import RandomSampler
@@ -15,7 +16,6 @@ from torch.utils.data.distributed import DistributedSampler
 
 from bert_dataset_provider import BertDatasetProviderInterface
 from turing.dataset import BatchType, map_to_torch
-
 
 # Workaround because python functions are not picklable
 class WorkerInitObj(object):
@@ -29,9 +29,14 @@ class WorkerInitObj(object):
 
 def create_pretraining_dataset(input_file, max_predictions_per_seq,
                                num_workers, train_batch_size, worker_init,
-                               data_sampler):
-    train_data = pretraining_dataset(
-        input_file=input_file, max_predictions_per_seq=max_predictions_per_seq)
+                               data_sampler, use_customized=False):
+    if not use_customized:
+        train_data = pretraining_dataset(
+            input_file=input_file, max_predictions_per_seq=max_predictions_per_seq)
+    else:
+        train_data = CustomizedDataset(
+            input_file=input_file)
+
     train_dataloader = DataLoader(train_data,
                                   sampler=data_sampler(train_data),
                                   batch_size=train_batch_size,
@@ -82,6 +87,64 @@ class pretraining_dataset(Dataset):
         ]
 
 
+class CustomizedDataset(Dataset):
+    r"""customized dataset is stored in HDF5 format
+    and has four inputs: ``input_ids``, ``valid_length``, ``masked_lm_positions``,
+    and ``masked_lm_ids``.
+
+    Arguments:
+        input_file (str): path to the data file.
+    """
+
+    def __init__(self, input_file):
+        super(CustomizedDataset, self).__init__()
+        self.input_file = input_file
+        f = h5py.File(self.input_file, "r")
+        # This is used to ensure that the previous generated datasets can still be used.
+        # FIXME: Will remove this after we regenerated the data.
+        if "input_mask" in f:
+            self.has_mask = True
+            keys = ["input_ids", "input_mask", "masked_lm_positions", "masked_lm_ids"]
+        else:
+            self.has_mask = False
+            keys = ["input_ids", "valid_length", "masked_lm_positions", "masked_lm_ids"]
+        self.inputs = [np.asarray(f[key][:]) for key in keys]
+        f.close()
+
+    def __len__(self):
+        return len(self.inputs[0])
+
+    def __getitem__(self, index):
+
+        [input_ids, x, masked_lm_positions, masked_lm_ids] = [
+            torch.from_numpy(feature[index].astype(np.int64))
+            for _, feature in enumerate(self.inputs)
+        ]
+
+        masked_lm_labels = (
+            torch.ones(input_ids.shape, dtype=torch.long, device=input_ids.device)
+            * -1
+        )
+        index = masked_lm_positions.shape[-1]
+        # store number of masked tokens in index
+        padded_mask_indices = (masked_lm_positions == 0).nonzero(as_tuple=False)
+        if len(padded_mask_indices) != 0:
+            index = padded_mask_indices[0].item()
+        masked_lm_labels[masked_lm_positions[:index]] = masked_lm_ids[:index]
+
+        if self.has_mask:
+            valid_length = x.sum(-1)
+        else:
+            valid_length = x
+        # make the data format align
+        segment_ids = torch.zeros_like(input_ids, dtype=torch.int64, 
+                                        device=input_ids.device)
+        next_sentence_labels = torch.zeros(1, dtype=torch.int64, 
+                                            device=input_ids.device)
+        return [map_to_torch([BatchType.PRETRAIN_BATCH]), 
+                input_ids, valid_length, segment_ids, next_sentence_labels, masked_lm_labels]
+
+
 class NvidiaBertDatasetProvider(BertDatasetProviderInterface):
     def __init__(self, args):
         self.num_workers = args.config['training']['num_workers']
@@ -120,6 +183,7 @@ class NvidiaBertDatasetProvider(BertDatasetProviderInterface):
             self.logger.info(
                 f"NvidiaBertDatasetProvider - Initialization:  num_files = {self.num_files}"
             )
+        self.use_customized = args.use_customized_data
 
     def get_shard(self, index):
         if self.dataset_future is None:
@@ -130,7 +194,8 @@ class NvidiaBertDatasetProvider(BertDatasetProviderInterface):
                 num_workers=self.num_workers,
                 train_batch_size=self.train_micro_batch_size_per_gpu,
                 worker_init=self.worker_init,
-                data_sampler=self.data_sampler)
+                data_sampler=self.data_sampler,
+                use_customized=self.use_customized)
         else:
             self.train_dataloader, sample_count = self.dataset_future.result(
                 timeout=None)

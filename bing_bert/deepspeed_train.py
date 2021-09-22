@@ -107,6 +107,10 @@ def pretrain_validation(args, index, model):
     nb_eval_steps = 0
     for batch in tqdm(data_batches):
         batch = tuple(t.to(args.device) for t in batch)
+        print(f'batch {batch}')
+        if dist.get_rank() == 0:
+            for t in batch:
+                print(f't size {t.size()}')
         tmp_eval_loss = model.network(batch, log=False)
         dist.reduce(tmp_eval_loss, 0)
         # Reduce to get the loss from all the GPU's
@@ -131,6 +135,9 @@ def master_process(args):
 
 from deepspeed.utils.logging import logger
 
+def print_at_rank0(msg):
+    if dist.get_rank() == 0:
+        print(msg)
 
 def train(args,
           index,
@@ -166,7 +173,8 @@ def train(args,
             step_start = time.time()
             batch = pretrain_dataset_provider.get_batch(batch_index)
             batch = tuple(t.to(args.device) for t in batch)  # Move to GPU
-
+            if _ == 0 and dist.get_rank() == 0: 
+                print_at_rank0(f'batch sizes: {[t.size() for t in batch]}')
             # Calculate forward pass
             loss = model.network(batch)
             unscaled_loss = loss.item()
@@ -302,6 +310,7 @@ def report_lamb_coefficients(args, optimizer):
 
 def get_arguments():
     parser = get_argument_parser()
+    parser.add_argument('--use-customized-data', default=False, action='store_true')
     # Include DeepSpeed configuration arguments
     parser = deepspeed.add_config_arguments(parser)
 

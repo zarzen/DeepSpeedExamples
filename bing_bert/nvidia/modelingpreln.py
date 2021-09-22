@@ -641,7 +641,8 @@ class BertEncoder(nn.Module):
         if checkpoint_activations:
             l = 0
             num_layers = len(self.layer)
-            chunk_length = math.ceil(math.sqrt(num_layers))
+            # chunk_length = math.ceil(math.sqrt(num_layers))
+            chunk_length = 1
             while l < num_layers:
                 hidden_states = checkpoint.checkpoint(
                     custom(l, l + chunk_length), hidden_states,
