@@ -311,6 +311,7 @@ def report_lamb_coefficients(args, optimizer):
 def get_arguments():
     parser = get_argument_parser()
     parser.add_argument('--use-customized-data', default=False, action='store_true')
+    parser.add_argument('--use-ds-context-manager', default=False, action='store_true')
     # Include DeepSpeed configuration arguments
     parser = deepspeed.add_config_arguments(parser)
 
