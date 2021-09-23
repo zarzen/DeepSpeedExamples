@@ -50,7 +50,7 @@
                 "pretrain_dataset": "128/wikicorpus_en"
             },
             "512": {
-                "pretrain_dataset": "512/wikicorpus_en"
+                "pretrain_dataset": "512/customized_data"
             }
         }
     },

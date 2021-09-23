@@ -12,10 +12,9 @@ HOST_FILE=${base_dir}/test_hostfile
 
 CONFIG=${CONFIG_DIR}/zero3_2nodes_profile.json
 
-LOCAL_SHARD=1
+# LOCAL_SHARD=1
 # make sure the nsys profile is disabled
 export NSYS_PROFILE='0'
-export DS_DEBUG=0
 # export NCCL_DEBUG=INFO
 # export FI_PROVIDER="efa"
 # export NCCL_SOCKET_IFNAME=eth
@@ -43,6 +42,7 @@ common_args="\
 --deepspeed \
 --data_path_prefix ${DATA_PREFIX} \
 --use_nvidia_dataset \
+--use-customized-data \
 --rewarmup \
 --lr_schedule EE \
 --attention_dropout_checkpoint \
