@@ -1129,7 +1129,7 @@ class BertForPreTrainingPreLN(BertPreTrainedModel):
 
         # inside BertModel use deepspeed.zero.Init
         self.bert = BertModel(config, args)
-        print(f'type of word embeddings {self.bert.embeddings.word_embeddings}, weight {self.bert.embeddings.word_embeddings.weight}')
+        # print(f'type of word embeddings {self.bert.embeddings.word_embeddings}, weight {self.bert.embeddings.word_embeddings.weight}')
 
         # with deepspeed.zero.Init(config=args.deepspeed_config):
         self.cls = BertPreTrainingHeads(

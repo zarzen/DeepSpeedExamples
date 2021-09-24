@@ -175,6 +175,9 @@ def train(args,
             batch = tuple(t.to(args.device) for t in batch)  # Move to GPU
             if _ == 0 and dist.get_rank() == 0: 
                 print_at_rank0(f'batch sizes: {[t.size() for t in batch]}')
+            if _ < 20:
+                if batch[1].size(1) > 512:
+                    print(f'input_ids len > 512, {batch[1].size()}')
             # Calculate forward pass
             loss = model.network(batch)
             unscaled_loss = loss.item()
