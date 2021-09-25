@@ -132,10 +132,11 @@ class CustomizedDataset(Dataset):
             index = padded_mask_indices[0].item()
         masked_lm_labels[masked_lm_positions[:index]] = masked_lm_ids[:index]
 
-        if self.has_mask:
-            valid_length = x.sum(-1)
-        else:
-            valid_length = x
+        # if self.has_mask:
+        #     valid_length = x.sum(-1)
+        # else:
+        #     valid_length = x
+        valid_length = x
         # make the data format align
         segment_ids = torch.zeros_like(input_ids, dtype=torch.int64, 
                                         device=input_ids.device)
