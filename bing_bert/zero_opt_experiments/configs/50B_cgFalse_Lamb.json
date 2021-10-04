@@ -1,5 +1,5 @@
 {
-    "train_batch_size": 8192,
+    "train_batch_size": 512,
     "train_micro_batch_size_per_gpu": 8,
     "steps_per_print": 10,
     "prescale_gradients": false,
@@ -33,7 +33,7 @@
         }
     },
     "gradient_clipping": 1.0,
-    "wall_clock_breakdown": true,
+    "wall_clock_breakdown": false,
     "fp16": {
         "enabled": true,
         "loss_scale": 0,
