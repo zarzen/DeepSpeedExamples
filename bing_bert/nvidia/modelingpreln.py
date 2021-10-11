@@ -569,7 +569,8 @@ class BertEncoder(nn.Module):
             raise NotImplementedError(
                 f'Currently DeepSpeed Transformer Kernels do not support Sparse Attention. To use Sparse Attention, you need to disable Transformer Kernels!'
             )
-
+        self.activation_checkpoint_n = int(os.environ.get('BERT_CHECKPOINT_N', 1))
+        print(f'activation_checkpoint n : {self.activation_checkpoint_n}')
         if args.deepspeed_transformer_kernel:
             from deepspeed import DeepSpeedTransformerLayer, DeepSpeedTransformerConfig
 
@@ -642,7 +643,7 @@ class BertEncoder(nn.Module):
             l = 0
             num_layers = len(self.layer)
             # chunk_length = math.ceil(math.sqrt(num_layers))
-            chunk_length = 1
+            chunk_length = self.activation_checkpoint_n
             while l < num_layers:
                 hidden_states = checkpoint.checkpoint(
                     custom(l, l + chunk_length), hidden_states,
