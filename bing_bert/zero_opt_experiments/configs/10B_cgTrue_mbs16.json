@@ -1,0 +1,87 @@
+{
+    "train_batch_size": 2048,
+    "train_micro_batch_size_per_gpu": 16,
+    "steps_per_print": 10,
+    "prescale_gradients": false,
+    "bert_token_file": "bert-base-uncased",
+    "bert_model_config": {
+        "vocab_size_or_config_json_file": 32003,
+        "hidden_size": 2560,
+        "num_hidden_layers": 127,
+        "num_attention_heads": 40,
+        "intermediate_size": 10240,
+        "hidden_act": "gelu",
+        "hidden_dropout_prob": 0.1,
+        "attention_probs_dropout_prob": 0.1,
+        "max_position_embeddings": 512,
+        "initializer_range": 0.02
+    },
+    "zero_optimization": {
+      "stage": 3,
+      "overlap_comm": true,
+      "reduce_scatter": true,
+      "contiguous_gradients": false
+    },
+    "zero_allow_untested_optimizer": true,
+    "optimizer": {
+      "type": "Adam",
+      "params": {
+        "lr": 1e-4,
+        "weight_decay": 0.01,
+        "bias_correction": true,
+        "eps": 1e-6
+      }
+    },
+    "gradient_clipping": 1.0,
+    "wall_clock_breakdown": false,
+    "fp16": {
+      "enabled": true,
+      "loss_scale": 0,
+      "initial_scale_power": 20,
+      "loss_scale_window": 1000
+    },
+    "flops_profiler": {
+        "enabled": false,
+        "profile_step": 1,
+        "module_depth": -1,
+        "top_modules": 1,
+        "detailed": true,
+        "output_file": null
+    },
+    "data": {
+        "flags": {
+            "pretrain_dataset": true,
+            "pretrain_type": "wiki_bc"
+        },
+        "mixed_seq_datasets": {
+            "128": {
+                "pretrain_dataset": "128/wikicorpus_en"
+            },
+            "512": {
+                "pretrain_dataset": "512/wikicorpus_en"
+            }
+        }
+    },
+    "mixed_seq_training": {
+        "128": {
+            "num_epochs": 16,
+            "warmup_proportion": 0.06,
+            "learning_rate": 11e-3,
+            "num_workers": 0,
+            "async_worker": true,
+            "decay_rate": 0.90,
+            "decay_step": 250,
+            "total_training_steps": 15000
+        },
+        "512": {
+            "num_epochs": 20,
+            "warmup_proportion": 0.02,
+            "learning_rate": 2e-3,
+            "num_workers": 0,
+            "async_worker": true,
+            "decay_rate": 0.90,
+            "decay_step": 150,
+            "total_training_steps": 15000
+        }
+    }
+}
