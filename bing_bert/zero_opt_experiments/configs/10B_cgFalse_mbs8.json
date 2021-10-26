@@ -20,7 +20,10 @@
       "stage": 3,
       "overlap_comm": true,
       "reduce_scatter": true,
-      "contiguous_gradients": false
+      "contiguous_gradients": false,
+      "comm_small_bucket_size": 250e6,
+      "comm_force_reduce_scatter": true,
+      "comm_allgather_stream_sync": false
     },
     "zero_allow_untested_optimizer": true,
     "optimizer": {
@@ -33,7 +36,7 @@
       }
     },
     "gradient_clipping": 1.0,
-    "wall_clock_breakdown": false,
+    "wall_clock_breakdown": true,
     "fp16": {
       "enabled": true,
       "loss_scale": 0,
