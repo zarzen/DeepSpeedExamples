@@ -23,7 +23,7 @@
       "contiguous_gradients": false,
       "comm_small_bucket_size": 250e6,
       "comm_force_reduce_scatter": true,
-      "comm_allgather_stream_sync": false
+      "comm_allgather_stream_sync": true
     },
     "zero_allow_untested_optimizer": true,
     "optimizer": {

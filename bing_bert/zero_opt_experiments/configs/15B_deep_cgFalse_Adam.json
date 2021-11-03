@@ -1,6 +1,6 @@
 {
     "train_batch_size": 2048,
-    "train_micro_batch_size_per_gpu": 16,
+    "train_micro_batch_size_per_gpu": 8,
     "steps_per_print": 10,
     "prescale_gradients": false,
     "bert_token_file": "bert-base-uncased",
@@ -20,7 +20,9 @@
       "stage": 3,
       "overlap_comm": true,
       "reduce_scatter": true,
-      "contiguous_gradients": false
+      "contiguous_gradients": false,
+      "comm_force_reduce_scatter": true,
+      "comm_allgather_stream_sync": true
     },
     "zero_allow_untested_optimizer": true,
     "optimizer": {
