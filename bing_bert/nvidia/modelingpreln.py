@@ -224,16 +224,20 @@ class LinearActivation(Module):
         self.out_features = out_features
         self.fused_gelu = False
         self.fused_tanh = False
-        if isinstance(act, str) or (sys.version_info[0] == 2
-                                    and isinstance(act, unicode)):
-            if bias and act == 'gelu':
-                self.fused_gelu = True
-            elif bias and act == 'tanh':
-                self.fused_tanh = True
-            else:
-                self.act_fn = ACT2FN[act]
-        else:
-            self.act_fn = act
+        # if isinstance(act, str) or (sys.version_info[0] == 2
+        #                             and isinstance(act, unicode)):
+        #     if bias and act == 'gelu':
+        #         self.fused_gelu = True
+        #     elif bias and act == 'tanh':
+        #         self.fused_tanh = True
+        #     else:
+        #         self.act_fn = ACT2FN[act]
+        # else:
+        #     self.act_fn = act
+
+        # disable bias_gelu for benchmarking 
+        self.act_fn = F.gelu
+
         self.weight = Parameter(torch.Tensor(out_features, in_features))
         if bias:
             self.bias = Parameter(torch.Tensor(out_features))
