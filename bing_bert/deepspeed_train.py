@@ -237,6 +237,8 @@ def train(args,
                 one_step_bs / all_step_time),
                   flush=True)
             all_step_time = 0.0
+        # release PT cached memory 
+        torch.cuda.empty_cache()
 
     pretrain_dataset_provider.release_shard(index)
 
