@@ -7,8 +7,8 @@ import torch
 import torch.distributed as dist
 from torch.nn import Module
 from torch.utils.data import DataLoader, Dataset, DistributedSampler
-from transformers import (DataCollatorForLanguageModeling, RobertaConfig,
-                          RobertaForMaskedLM, RobertaTokenizerFast)
+from transformers import (DataCollatorForLanguageModeling, 
+                        GPT2Tokenizer, GPT2LMHeadModel, GPT2Config)
 
 def count_parameters(model):
     return sum(p.ds_numel for p in model.parameters())
@@ -39,7 +39,7 @@ class FakeDataset(Dataset):
         self.__epoch_sz = epoch_sz
 
     def __getitem__(self, _: int) -> dict:
-        return {"text": "this is a fake sentence"}
+        return {"text": "Hello, my dog is cute, this is a fake sentence"}
 
     def __len__(self) -> int:
         return self.__epoch_sz
@@ -58,6 +58,7 @@ class CollatorForLMWrapper(DataCollatorForLanguageModeling):
             truncation=True,
             max_length=self.max_length,
             return_special_tokens_mask=True,
+            return_tensors="pt"
         )
 
         batch = list(
@@ -77,47 +78,45 @@ def get_dataloader(args, tokenizer):
 
     training_loader = DataLoader(
         train_dataset,
-            batch_size=micro_bs,
-            collate_fn=CollatorForLMWrapper(
+        batch_size=micro_bs,
+        collate_fn=CollatorForLMWrapper(
                 tokenizer=tokenizer,
                 device=torch.device(f"cuda:{args.local_rank}"),
                 max_length=512,
-                mlm=True,
-                mlm_probability=0.15,
-            ),
-            sampler=DistributedSampler(
-                train_dataset,
-                num_replicas=world_size,
-                rank=rank,
-                seed=1234,
-            ),
+                mlm=False,
+        ),
+        sampler=DistributedSampler(
+            train_dataset,
+            num_replicas=world_size,
+            rank=rank,
+            seed=1234,
+        ),
         )
 
     return training_loader
 
 def get_model(args) -> Module:
-    model_config = args.config['roberta_config']
-
-    cfg = RobertaConfig(
-        max_position_embeddings=model_config['max_position_embeddings'],
-        type_vocab_size=model_config['type_vocab_size'],
-        num_attention_heads=model_config['num_attention_heads'],
-        num_hidden_layers=model_config['num_hidden_layers'],
-        hidden_size=model_config['hidden_size'],
-        intermediate_size=model_config['intermediate_size'],
-        # gradient_checkpointing=model_config['gradient_checkpointing'],
+    model_config = args.config['gpt_config']
+    cfg = GPT2Config(
         vocab_size=model_config['vocab_size'],
+        n_positions=model_config['max_position_embeddings'],
+        n_embd=model_config['embedding_dim'],
+        n_layer=model_config['num_hidden_layers'],
+        n_head=model_config['num_attention_heads'],
+        n_inner=model_config['intermediate_size'],
+        use_cache=False if model_config['gradient_checkpointing'] else True
     )
+
     if args.config['zero_optimization']['stage'] == 3:
         with deepspeed.zero.Init(config=args.config):
-            model = RobertaForMaskedLM(cfg)
+            model = GPT2LMHeadModel(cfg)
     else:
-        model = RobertaForMaskedLM(cfg)
-    if model_config['gradient_checkpointing']:
-        model.gradient_checkpointing_enable()
+        model = GPT2LMHeadModel(cfg)
 
     print_at_rank0(model)
     print_at_rank0(f"model param size {count_parameters(model)/1e9} B")
+    if model_config['gradient_checkpointing'] == True:
+        model.gradient_checkpointing_enable()
 
     return model
 
@@ -128,32 +127,29 @@ def main():
     torch.cuda.set_device(local_rank)
     deepspeed.init_distributed(dist_backend='nccl')
 
-    tokenizer = RobertaTokenizerFast.from_pretrained("roberta-base")
+    tokenizer = GPT2Tokenizer.from_pretrained("gpt2")
+    tokenizer.pad_token = tokenizer.eos_token
     print(f'tokenizer vocab_size {tokenizer.vocab_size}'
-            f' config vocab size {args.config["roberta_config"]["vocab_size"]}')
-    assert tokenizer.vocab_size <= args.config["roberta_config"]["vocab_size"]
+            f' config vocab size {args.config["gpt_config"]["vocab_size"]}')
+    assert tokenizer.vocab_size <= args.config["gpt_config"]["vocab_size"]
     # get data_loader
     training_dataloader = get_dataloader(args, tokenizer)
     
     model = get_model(args)
 
-    # with deepspeed.zero.Init(config=ds_config):
-    with torch.cuda.nvtx.range("create_training_engine"):
-        with torch.cuda.nvtx.range("deepspeed.initialize"):
-            model, _, _, _ = deepspeed.initialize(
-                model=model,
-                model_parameters=model.parameters(),
-                config=args.config,
-            )
+    model, _, _, _ = deepspeed.initialize(
+        model=model,
+        model_parameters=model.parameters(),
+        config=args.config,
+    )
     for e in range(args.num_epochs):
-        for n, batch in enumerate(training_dataloader):
+        for n, inputs in enumerate(training_dataloader):
             if n < 5 and e < 1:
-                # verify the input size
-                print_at_rank0(f"{[batch[k].size() for k in batch]}")
-
-            loss = model(batch["input_ids"],
-                    batch["attention_mask"],
-                    labels=batch["labels"],).loss
+                print_at_rank0(f"{[inputs[k].size() for k in inputs]}")
+            outputs = model(input_ids=inputs['input_ids'],
+                            attention_mask=inputs['attention_mask'],
+                            labels=inputs["input_ids"])
+            loss = outputs.loss
             model.backward(loss) 
             model.step()
             
