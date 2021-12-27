@@ -8,7 +8,7 @@
         "max_position_embeddings": 512,
         "type_vocab_size": 1,
         "num_attention_heads": 40,
-        "num_hidden_layers": 30,
+        "num_hidden_layers": 31,
         "hidden_size": 5120,
         "intermediate_size": 20480,
         "gradient_checkpointing": true,

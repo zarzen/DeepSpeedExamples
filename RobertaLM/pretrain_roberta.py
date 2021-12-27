@@ -10,6 +10,9 @@ from torch.utils.data import DataLoader, Dataset, DistributedSampler
 from transformers import (DataCollatorForLanguageModeling, RobertaConfig,
                           RobertaForMaskedLM, RobertaTokenizerFast)
 
+def count_parameters(model):
+    return sum(p.ds_numel for p in model.parameters())
+
 
 def print_at_rank0(msg):
     if dist.get_rank() == 0:
@@ -112,6 +115,7 @@ def get_model(args) -> Module:
         model = RobertaForMaskedLM(cfg)
 
     print_at_rank0(model)
+    print_at_rank0(f"model param size {count_parameters(model)/1e9} B")
 
     return model
 
