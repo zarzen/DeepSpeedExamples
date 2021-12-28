@@ -108,6 +108,11 @@ def get_model(args) -> Module:
         # gradient_checkpointing=model_config['gradient_checkpointing'],
         vocab_size=model_config['vocab_size'],
     )
+    # override _init_weights of RobertaForMaskedLM
+    def _dummy_init(self, module):
+        pass
+    RobertaForMaskedLM._init_weights = _dummy_init
+
     if args.config['zero_optimization']['stage'] == 3:
         with deepspeed.zero.Init(config=args.config):
             model = RobertaForMaskedLM(cfg)
