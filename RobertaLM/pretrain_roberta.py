@@ -9,6 +9,7 @@ from torch.nn import Module
 from torch.utils.data import DataLoader, Dataset, DistributedSampler
 from transformers import (DataCollatorForLanguageModeling, RobertaConfig,
                           RobertaForMaskedLM, RobertaTokenizerFast)
+from transformers.modeling_utils import no_init_weights
 
 def count_parameters(model):
     return sum(p.ds_numel for p in model.parameters())
@@ -109,15 +110,12 @@ def get_model(args) -> Module:
         vocab_size=model_config['vocab_size'],
     )
     # override _init_weights of RobertaForMaskedLM
-    def _dummy_init(self, module):
-        pass
-    RobertaForMaskedLM._init_weights = _dummy_init
-
-    if args.config['zero_optimization']['stage'] == 3:
-        with deepspeed.zero.Init(config=args.config):
+    with no_init_weights(True):
+        if args.config['zero_optimization']['stage'] == 3:
+            with deepspeed.zero.Init(config=args.config):
+                model = RobertaForMaskedLM(cfg)
+        else:
             model = RobertaForMaskedLM(cfg)
-    else:
-        model = RobertaForMaskedLM(cfg)
     if model_config['gradient_checkpointing']:
         model.gradient_checkpointing_enable()
 
