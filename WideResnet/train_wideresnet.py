@@ -51,7 +51,7 @@ class FakeDataset(Dataset):
 
 
 def get_dataloader(args): 
-    train_dataset = FakeDataset(20000)
+    train_dataset = FakeDataset(8192 * 100)
     world_size = dist.get_world_size()
     rank = dist.get_rank()
     micro_bs = args.config['train_micro_batch_size_per_gpu']
