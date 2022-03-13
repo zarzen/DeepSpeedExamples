@@ -139,6 +139,23 @@ def print_at_rank0(msg):
     if dist.get_rank() == 0:
         print(msg)
 
+def pad_to_max_len(args, batch):
+    """"""
+    max_len = args.max_seq_length
+
+    rst = []
+    for i, t in enumerate(batch):
+        if i == 0 or i == 4:
+            # not to pad
+            rst.append(t)
+        else:
+            cur_size = t.size()
+            pad_size = (1, max_len - cur_size[-1] - 1)
+            p = torch.nn.functional.pad(t, pad_size)
+            rst.append(p)
+    
+    return rst
+
 def train(args,
           index,
           model,
@@ -149,6 +166,8 @@ def train(args,
     global global_data_samples
     global last_global_step_from_restore
     global all_step_time
+
+    print(f'max sequence length {args.max_seq_length}')
 
     dataset_iterator, total_length = pretrain_dataset_provider.get_shard(index)
     current_data_sample_count = global_data_samples
@@ -172,12 +191,14 @@ def train(args,
             nvtx.range_push(f"forward-micro-batch-{_}")
             step_start = time.time()
             batch = pretrain_dataset_provider.get_batch(batch_index)
+            # print(f'before padding {[t.size() for t in batch]}')
+            batch = pad_to_max_len(args, batch)
             batch = tuple(t.to(args.device) for t in batch)  # Move to GPU
-            if _ == 0 and dist.get_rank() == 0: 
+            if _ < 10 and dist.get_rank() == 0: 
                 print_at_rank0(f'batch sizes: {[t.size() for t in batch]}')
-            if _ < 20:
-                if batch[1].size(1) > 512:
-                    print(f'input_ids len > 512, {batch[1].size()}')
+            if _ < 10:
+                if batch[1].size(1) > args.max_seq_length:
+                    print(f'input_ids len > args.max_seq_length, {batch[1].size()}')
             # Calculate forward pass
             loss = model.network(batch)
             unscaled_loss = loss.item()
@@ -335,7 +356,8 @@ def construct_arguments():
     config = json.load(open(args.config_file, 'r', encoding='utf-8'))
 
     # choose dataset and training config based on the given sequence length
-    seq_len = str(args.max_seq_length)
+    # seq_len = str(args.max_seq_length)
+    seq_len = '512'
 
     datasets = config["data"]["mixed_seq_datasets"][seq_len]
     del config["data"]["mixed_seq_datasets"]
