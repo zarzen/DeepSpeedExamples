@@ -177,7 +177,7 @@ def load_tf_weights_in_bert(model, tf_checkpoint_path):
     return model
 
 
-@torch.jit.script
+# @torch.jit.script
 def f_gelu(x):
     pdtype = x.dtype
     x = x.float()
@@ -185,13 +185,13 @@ def f_gelu(x):
     return y.to(pdtype)
 
 
-@torch.jit.script
+# @torch.jit.script
 def bias_gelu(bias, y):
     x = bias + y
     return x * 0.5 * (1.0 + torch.erf(x / 1.41421))
 
 
-@torch.jit.script
+# @torch.jit.script
 def bias_tanh(bias, y):
     x = bias + y
     return torch.tanh(x)
